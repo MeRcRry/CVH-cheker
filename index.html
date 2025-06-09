@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Проверка статуса заявки</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f8f8f8;
+    }
+    h1 {
+      color: #333;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    pre {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Проверьте статус своей заявки</h1>
+  <input id="email" type="email" placeholder="Введите ваш email">
+  <button onclick="checkStatus()">Проверить</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function checkStatus() {
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const url = `https://script.google.com/macros/s/AKfycbwKKeAYkDMyHHUbUecT_CAheKXa43KVDb7ZDtQrDVdGroNI215l-7i2tj59J_Tea9n16g/exec?email=${encodeURIComponent(email)}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const resultBox = document.getElementById("result");
+      if (data.results.length === 0) {
+        resultBox.textContent = "Данных по введённому email не найдено.";
+      } else {
+        const entry = data.results[0];
+        resultBox.innerHTML = `
+          📅 <b>Отметка времени:</b> ${entry["Отметка времени"] || "-"}
+          📍 <b>Город:</b> ${entry["Укажите Город"] || "-"}
+          📆 <b>Даты:</b> ${entry["Укажите примерные даты, от"] || "-"} — ${entry["До"] || "-"}
+          🚜 <b>Количество техники:</b> ${entry["Укажите количество техники"] || "-"}
+          📄 <b>Статус:</b> ${entry["Укажите Статус"] || "-"}
+          📎 <b>Загруженный документ:</b> ${entry["Загрузите документ"] || "-"}
+          ✅ <b>Статус проверки:</b> ${entry["Статус"] || "-"}
+          🗓 <b>Дата проверки:</b> ${entry["Дата проверки"] || "-"}
+          🏢 <b>Адрес СВХ:</b> ${entry["Адрес СВХ"] || "-"}
+          🌟 <b>Баллы:</b> ${entry["Баллы"] || "-"}
+          📁 <b>Конечный документ:</b> ${entry["Конечный документ"] || "-"}
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
