@@ -37,7 +37,7 @@
   <script>
     async function checkStatus() {
       const email = document.getElementById("email").value.trim().toLowerCase();
-      const url = `https://script.google.com/macros/s/AKfycbwKKeAYkDMyHHUbUecT_CAheKXa43KVDb7ZDtQrDVdGroNI215l-7i2tj59J_Tea9n16g/exec?email=${encodeURIComponent(email)}`;
+      const url = `https://script.google.com/macros/s/AKfycbx5V9YBKypfzwoq7wxf8_2_Y9CwJbAAiU2wplWVVtiHb-JPzS1OILvXgGbj8BMdLybulA/exec?email=${encodeURIComponent(email)}`;
 
       const res = await fetch(url);
       const data = await res.json();
