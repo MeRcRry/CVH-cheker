@@ -2,85 +2,174 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>CVH-Checker</title>
+  <title>Проверка заявок</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
-    input, button { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-    #result { margin-top: 20px; background: #fff; padding: 15px; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #form {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .entry-pair {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+      width: 100%;
+      justify-content: center;
+    }
+    .box {
+      flex: 1 1 300px;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .box h3 {
+      margin-top: 0;
+    }
+    a {
+      word-break: break-word;
+    }
   </style>
 </head>
 <body>
-  <h2>Проверка заявки и загрузка документов</h2>
+  <h1>Проверка своих заявок</h1>
 
-  <!-- Проверка по email -->
-  <input type="email" id="email" placeholder="Введите email" required>
-  <button onclick="checkStatus()">Проверить статус</button>
+  <div id="form">
+    <input type="email" id="email" placeholder="Введите email">
+    <button onclick="checkStatus()">Проверить</button>
+  </div>
 
-  <hr>
-
-  <!-- Загрузка нового документа -->
-  <h3>Загрузить документ</h3>
-  <input type="file" id="fileInput">
-  <button onclick="uploadFile()">Загрузить на сервер</button>
-
-  <div id="result"></div>
+  <div id="allResults"></div>
 
   <script>
-    const SCRIPT_ID = 'AKfycbx5V9YBKypfzwoq7wxf8_2_Y9CwJbAAiU2wplWVVtiHb-JPzS1OILvXgGbj8BMdLybulA'; // замените на настоящий
-
     function formatDate(input) {
       if (!input) return "—";
-      const d = new Date(input);
-      return isNaN(d) ? input : d.toLocaleDateString("ru-RU", { day:'numeric', month:'long', year:'numeric' });
+      const date = new Date(input);
+    
+      // Сдвиг времени на -1 час (в миллисекундах)
+      date.setHours(date.getHours() - 1);
+    
+      return isNaN(date) ? input : date.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
     }
 
+
     function getFileLink(link) {
-      return link
-        ? `<a href="${link}" target="_blank">📥 Скачать</a>`
-        : '—';
+      if (!link || link === "-" || link.length < 10) {
+        return `<i style="color:gray">Файл не загружен</i>`;
+      }
+      if (link.includes("drive.google.com")) {
+        const match = link.match(/[-\w]{25,}/);
+        if (match) {
+          const fileId = match[0];
+          const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+          return `<a href="${directUrl}" target="_blank">📥 Скачать</a>`;
+        } else {
+          return `<a href="${link}" target="_blank">📂 Открыть</a>`;
+        }
+      }
+      if (!link.includes("http")) {
+        return `<i style="color:gray">Файл загружен, но ссылка недоступна</i>`;
+      }
+      return `<a href="${link}" target="_blank">📂 Открыть</a>`;
     }
 
     async function checkStatus() {
-      const email = document.getElementById('email').value.trim().toLowerCase();
-      if (!email) return alert('Введите email!');
-      const url = `https://script.google.com/macros/s/${SCRIPT_ID}/exec?email=${encodeURIComponent(email)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const box = document.getElementById('result');
-      if (!data.results.length) {
-        box.innerHTML = 'По этому email нет записей.';
-      } else {
-        const e = data.results[0];
-        box.innerHTML = `
-          <h3>📌 Общая информация:</h3>
-          <b>🕒 Отметка времени:</b> ${formatDate(e["Отметка времени"])}<br>
-          <b>📍 Город:</b> ${e["Укажите Город"]||'—'}<br>
-          <b>📅 Даты:</b> ${formatDate(e["Укажите примерные даты, от"])} — ${formatDate(e["До"])}<br>
-          <b>🚜 Техника:</b> ${e["Укажите количество техники"]||'—'}<br>
-          <hr>
-          <h3>📝 Статус и проверка:</h3>
-          <b>📎 Загруженный через форму:</b> ${getFileLink(e["Загрузите документ"])}<br>
-          <b>✅ Статус проверки:</b> ${e["Статус"]||'—'}<br>
-          <b>📅 Дата проверки:</b> ${formatDate(e["Дата проверки"])}<br>
-          <b>📁 Конечный документ:</b> ${getFileLink(e["Конечный документ"])}
-        `;
-      }
-    }
 
-    async function uploadFile() {
-      const input = document.getElementById('fileInput');
-      if (!input.files.length) return alert('Выберите файл!');
-      const form = new FormData();
-      form.append('file', input.files[0]);
-      const res = await fetch(`https://script.google.com/macros/s/${SCRIPT_ID}/exec`, {
-        method: 'POST',
-        body: form
-      });
-      const json = await res.json();
-      if (json.url) {
-        document.getElementById('result').innerHTML = `Файл успешно загружен: <a href="${json.url}" target="_blank">📥 Скачать</a>`;
-      } else {
-        document.getElementById('result').textContent = 'Ошибка при загрузке.';
+
+      const email = document.getElementById("email").value.trim().toLowerCase();
+      const url = `https://script.google.com/macros/s/AKfycbx5V9YBKypfzwoq7wxf8_2_Y9CwJbAAiU2wplWVVtiHb-JPzS1OILvXgGbj8BMdLybulA/exec?email=${encodeURIComponent(email)}`;
+      const container = document.getElementById("allResults");
+      container.innerHTML = "⏳ Загрузка...";
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const entries = data.results.filter(e =>
+          (e["Адрес электронной почты"] || "").trim().toLowerCase() === email
+        );
+
+
+        if (!data || !Array.isArray(data.results) || data.results.length === 0) {
+          userData.innerHTML = "<h3>📌 Отправленные данные</h3><p><b>Данных по введённому email не найдено.</b></p>";
+          checkData.innerHTML = "<h3>✅ Проверка</h3><p>—</p>";
+          resultBox.style.display = "flex";
+          return;
+        }
+
+
+        // Сортируем по дате
+        entries.sort((a, b) =>
+          new Date(b["Отметка времени"]) - new Date(a["Отметка времени"])
+        );
+
+        container.innerHTML = "";
+        for (const entry of entries) {
+          const pair = document.createElement("div");
+          pair.className = "entry-pair";
+
+          const userBox = document.createElement("div");
+          userBox.className = "box";
+          userBox.innerHTML = `
+            <h3>📌 Отправленные данные</h3>
+            <b>📅 Отметка времени:</b> ${formatDate(entry["Отметка времени"])}<br>
+            <b>📍 Наименование:</b> ${entry["Укажите ваше Наименование"] || "-"}<br>
+            <b>📆 Даты:</b> ${formatDate(entry["Укажите примерные даты, от "])} — ${formatDate(entry["До"])}<br>
+            <b>🚜 Техника:</b> ${entry["Укажите количество техники"] || "-"}<br>
+            <b>📎 Документ:</b><br>${getFileLink(entry["Загрузка данных"])}<br>
+            <b>🏢 Адрес СВХ:</b> ${entry["Адрес СВХ"] || "-"}
+          `;
+
+          const status = (entry["Статус"] || "-").toLowerCase();
+          let statusColor = "#ccc";
+          if (status.includes("откл")) statusColor = "#f8d7da";
+          else if (status.includes("действ") || status.includes("одобр")) statusColor = "#d4edda";
+          else if (status.includes("ожид")) statusColor = "#d1ecf1";
+
+          const checkBox = document.createElement("div");
+          checkBox.className = "box";
+          checkBox.innerHTML = `
+            <div style="background-color: ${statusColor}; padding: 15px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
+              <h3>✅ Проверка</h3>
+              <b>Статус:</b> <span style="font-weight:bold;">${entry["Статус"] || "-"}</span><br>
+              <b>📅 Дата проверки:</b> ${formatDate(entry["Дата проверки"])}<br>
+              <b>📁 Конечный документ:</b><br>${getFileLink(entry["Столбец 14"])}
+            </div>
+          `;
+
+          pair.appendChild(userBox);
+          pair.appendChild(checkBox);
+          container.appendChild(pair);
+        }
+      } catch (e) {
+        container.innerHTML = "❌ Ошибка при получении данных.";
+        console.error(e);
       }
     }
   </script>
