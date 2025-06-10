@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -35,17 +35,30 @@
   <pre id="result"></pre>
 
   <script>
+    function formatDate(input) {
+      if (!input) return "—";
+
+      const date = new Date(input);
+      if (isNaN(date)) return input; // если не распозналось как дата — вернуть как есть
+
+      return date.toLocaleDateString("ru-RU", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
+    
     function getFileLink(link) {
-  if (!link || link === "-") return "-";
-  let match = link.match(/[-\w]{25,}/); // Находим FILE_ID
-  if (match) {
-    const fileId = match[0];
-    const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    return `<a href="${directUrl}" target="_blank">📥 Скачать</a>`;
-  } else {
-    return `<a href="${link}" target="_blank">📂 Открыть</a>`;
-  }
-}
+      if (!link || link === "-") return "-";
+      let match = link.match(/[-\w]{25,}/); // Находим FILE_ID
+      if (match) {
+        const fileId = match[0];
+        const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        return `<a href="${directUrl}" target="_blank">📥 Скачать</a>`;
+      } else {
+        return `<a href="${link}" target="_blank">📂 Открыть</a>`;
+      }
+    }
 
     async function checkStatus() {
       const email = document.getElementById("email").value.trim().toLowerCase();
@@ -60,19 +73,21 @@
       } else {
         const entry = data.results[0];
       resultBox.innerHTML = `
-        <h3>📌 Общая информация:</h3>
-        📅 <b>Отметка времени:</b> ${entry["Отметка времени"] || "-"}<br>
-        📍 <b>Укажите ваше Наименование:</b> ${entry["Укажите ваше Наименование"] || "-"}<br>
-        📆 <b>Даты:</b> ${entry["Укажите примерные даты, от"] || "-"} — ${entry["До"] || "-"}<br>
-        🚜 <b>Количество техники:</b> ${entry["Укажите количество техники"] || "-"}<br>
-        🏢 <b>Адрес СВХ:</b> ${entry["Адрес СВХ"] || "-"}<br>
-        📎 <b>Загруженный документ:</b> ${getFileLink(entry["Загрузите документ"])}<br>
+      resultBox.innerHTML = `
+        <h3> 📌 Общая информация:</h3>
+        <b>🕒 Отметка времени:</b> ${formatDate(entry["Отметка времени"])}<br>
+        <b>📍 Город:</b> ${entry["Укажите Город"] || "-"}<br>
+        <b>📅 Даты:</b> ${formatDate(entry["Укажите примерные даты, от"])} — ${formatDate(entry["До"])}<br>
+        <b>🚜 Кол-во техники:</b> ${entry["Укажите количество техники"] || "-"}<br>
+        <b>🏢 Адрес СВХ:</b> ${entry["Адрес СВХ"] || "-"}<br>
         <hr>
-        <hr>
-        <h3>📝 Статус и проверка:</h3>
-        ✅ <b>Статус проверки:</b> ${entry["Статус"] || "-"}<br>
-        🗓 <b>Дата проверки:</b> ${entry["Дата проверки"] || "-"}<br>
-        📁 <b>Конечный документ:</b> ${getFileLink(entry["Конечный документ"])}<br>
+        <h3> 📝 Статус и проверка: </h3>
+
+        <b>📎 Загруженный документ:</b> ${formatLink(entry["Загрузите документ"])}<br>
+        <b>✅ Статус проверки:</b> <span style="color:green;"><b>${entry["Статус"] || "-"}</b></span><br>
+        <b>📅 Дата проверки:</b> ${formatDate(entry["Дата проверки"])}<br>
+        <b>📁 Конечный документ:</b> ${formatLink(entry["Конечный документ"])}
+`;
 
       `;
       }
