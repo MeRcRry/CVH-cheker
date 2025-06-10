@@ -60,10 +60,11 @@
       }
     }
 
-    async function checkStatus() {
-      const email = document.getElementById("email").value.trim().toLowerCase();
-      const url = `https://script.google.com/macros/s/AKfycbx5V9YBKypfzwoq7wxf8_2_Y9CwJbAAiU2wplWVVtiHb-JPzS1OILvXgGbj8BMdLybulA/exec?email=${encodeURIComponent(email)}`;
+  async function checkStatus() {
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const url = `https://script.google.com/macros/s/ТВОЙ_ID/exec?email=${encodeURIComponent(email)}`;
 
+    try {
       const res = await fetch(url);
       const data = await res.json();
 
@@ -72,6 +73,12 @@
         resultBox.textContent = "Данных по введённому email не найдено.";
       } else {
         const entry = data.results[0];
+
+        // Проверка и форматирование
+        const formatLink = (text) => {
+          if (!text || text === "-") return "-";
+          return `<a href="${text}" target="_blank" download>Скачать файл</a>`;
+        };
       resultBox.innerHTML = `
       resultBox.innerHTML = `
         <h3> 📌 Общая информация:</h3>
