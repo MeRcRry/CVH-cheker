@@ -2,73 +2,85 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Проверка заявки</title>
+  <title>CVH-Checker</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+    #result { margin-top: 20px; background: #fff; padding: 15px; border-radius: 6px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+  </style>
 </head>
 <body>
-  <h2>Проверить статус заявки</h2>
+  <h2>Проверка заявки и загрузка документов</h2>
+
+  <!-- Проверка по email -->
   <input type="email" id="email" placeholder="Введите email" required>
-  <button onclick="checkStatus()">Проверить</button>
-  <div id="result" style="margin-top: 20px;"></div>
+  <button onclick="checkStatus()">Проверить статус</button>
+
+  <hr>
+
+  <!-- Загрузка нового документа -->
+  <h3>Загрузить документ</h3>
+  <input type="file" id="fileInput">
+  <button onclick="uploadFile()">Загрузить на сервер</button>
+
+  <div id="result"></div>
 
   <script>
-    // Форматирование даты в стиль: 10 июня 2025
+    const SCRIPT_ID = 'ТВОЙ_ID_скрипта'; // замените на настоящий
+
     function formatDate(input) {
       if (!input) return "—";
-      const date = new Date(input);
-      if (isNaN(date)) return input;
-      return date.toLocaleDateString("ru-RU", {
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      });
+      const d = new Date(input);
+      return isNaN(d) ? input : d.toLocaleDateString("ru-RU", { day:'numeric', month:'long', year:'numeric' });
     }
 
-    // Форматирование ссылки на файл Google Drive
     function getFileLink(link) {
-      if (!link || link === "-") return "-";
-      let match = link.match(/[-\w]{25,}/); // Находим file ID
-      if (match) {
-        const fileId = match[0];
-        const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        return `<a href="${directUrl}" target="_blank">📥 Скачать</a>`;
+      return link
+        ? `<a href="${link}" target="_blank">📥 Скачать</a>`
+        : '—';
+    }
+
+    async function checkStatus() {
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      if (!email) return alert('Введите email!');
+      const url = `https://script.google.com/macros/s/${SCRIPT_ID}/exec?email=${encodeURIComponent(email)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const box = document.getElementById('result');
+      if (!data.results.length) {
+        box.innerHTML = 'По этому email нет записей.';
       } else {
-        return `<a href="${link}" target="_blank">📂 Открыть</a>`;
+        const e = data.results[0];
+        box.innerHTML = `
+          <h3>📌 Общая информация:</h3>
+          <b>🕒 Отметка времени:</b> ${formatDate(e["Отметка времени"])}<br>
+          <b>📍 Город:</b> ${e["Укажите Город"]||'—'}<br>
+          <b>📅 Даты:</b> ${formatDate(e["Укажите примерные даты, от"])} — ${formatDate(e["До"])}<br>
+          <b>🚜 Техника:</b> ${e["Укажите количество техники"]||'—'}<br>
+          <hr>
+          <h3>📝 Статус и проверка:</h3>
+          <b>📎 Загруженный через форму:</b> ${getFileLink(e["Загрузите документ"])}<br>
+          <b>✅ Статус проверки:</b> ${e["Статус"]||'—'}<br>
+          <b>📅 Дата проверки:</b> ${formatDate(e["Дата проверки"])}<br>
+          <b>📁 Конечный документ:</b> ${getFileLink(e["Конечный документ"])}
+        `;
       }
     }
 
-    // Главная функция — проверка статуса по email
-    async function checkStatus() {
-      const email = document.getElementById("email").value.trim().toLowerCase();
-      const url = `https://script.google.com/macros/s/AKfycbx5V9YBKypfzwoq7wxf8_2_Y9CwJbAAiU2wplWVVtiHb-JPzS1OILvXgGbj8BMdLybulA/exec?email=${encodeURIComponent(email)}`;
-
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        const resultBox = document.getElementById("result");
-
-        if (data.results.length === 0) {
-          resultBox.textContent = "Данных по введённому email не найдено.";
-        } else {
-          const entry = data.results[0];
-
-          resultBox.innerHTML = `
-            <h3>📌 Общая информация:</h3>
-            <b>🕒 Отметка времени:</b> ${formatDate(entry["Отметка времени"])}<br>
-            <b>📍 Ваше Наименование:</b> ${entry["Укажите ваше Наименование"] || "-"}<br>
-            <b>📅 Даты:</b> ${formatDate(entry["Укажите примерные даты, от"])} — ${formatDate(entry["До"])}<br>
-            <b>🚜 Кол-во техники:</b> ${entry["Укажите количество техники"] || "-"}<br>
-            <b>🏢 Адрес СВХ:</b> ${entry["Адрес СВХ"] || "-"}<br>
-            <hr>
-            <h3>📝 Статус и проверка:</h3>
-            <b>📎 Загруженный документ:</b> ${getFileLink(entry["Загрузите документ"])}<br>
-            <b>✅ Статус проверки:</b> <span style="color:green;"><b>${entry["Статус"] || "-"}</b></span><br>
-            <b>📅 Дата проверки:</b> ${formatDate(entry["Дата проверки"])}<br>
-            <b>📁 Конечный документ:</b> ${getFileLink(entry["Конечный документ"])}
-          `;
-        }
-      } catch (error) {
-        document.getElementById("result").textContent = "Ошибка при получении данных. Попробуйте позже.";
-        console.error(error);
+    async function uploadFile() {
+      const input = document.getElementById('fileInput');
+      if (!input.files.length) return alert('Выберите файл!');
+      const form = new FormData();
+      form.append('file', input.files[0]);
+      const res = await fetch(`https://script.google.com/macros/s/${SCRIPT_ID}/exec`, {
+        method: 'POST',
+        body: form
+      });
+      const json = await res.json();
+      if (json.url) {
+        document.getElementById('result').innerHTML = `Файл успешно загружен: <a href="${json.url}" target="_blank">📥 Скачать</a>`;
+      } else {
+        document.getElementById('result').textContent = 'Ошибка при загрузке.';
       }
     }
   </script>
