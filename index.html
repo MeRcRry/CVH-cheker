@@ -10,6 +10,9 @@
       background: #f5f5f5;
       padding: 20px;
     }
+    .cheker{
+      backgorund: #e4d5d5;
+    }
     h1 {
       text-align: center;
     }
@@ -159,9 +162,10 @@
           if (status.includes("откл")) statusColor = "#f8d7da";
           else if (status.includes("действ") || status.includes("одобр")) statusColor = "#d4edda";
           else if (status.includes("ожид")) statusColor = "#d1ecf1";
+          
 
           const checkBox = document.createElement("div");
-          checkBox.className = "box";
+          checkBox.className = "box cheker";
           checkBox.innerHTML = `
             <div style="background-color: ${statusColor}; padding: 15px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
               <h3>✅ Проверка</h3>
