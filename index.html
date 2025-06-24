@@ -70,7 +70,6 @@
       const date = new Date(input);
     
       // Сдвиг времени на -1 час (в миллисекундах)
-      date.setHours(date.getHours() - 1);
     
       return isNaN(date) ? input : date.toLocaleDateString("ru-RU", {
         day: "numeric",
