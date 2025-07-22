@@ -177,8 +177,8 @@
           checkBox.style.backgroundColor = "#e8e0ff";
           checkBox.innerHTML = `
             <div style="background-color: ${statusColor}; padding: 15px; border-radius: 10px; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
-              <h1>✅ Досмотр</h1>
-              <b>Статус:</b> <h3><span style="font-weight:bold;">${entry["Статус"] || "В ожидании"}</span></h3><br>
+              <h3>✅ Досмотр</h3>
+              <b>Статус:</b> <h4><span style="font-weight:bold;">${entry["Статус"] || "В ожидании"}</span></h4><br>
               <b>📅 Дата досмотра (от):</b> ${formatDate(entry["Дата проверки"]).substring(0, 15)}<br>
               <b>📅 Дата досмотра до:</b> ${formatDate(entry["Дата проверки до"]).substring(0, 15)}<br>
               <hr>
